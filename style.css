@@ -1,0 +1,12 @@
+body{
+    background-color: #222;
+    color: #fff;
+    width: 100vw;
+    height: 100vh;
+    margin: 0px;
+    overflow: hidden;
+}
+#container{
+    width: 100vw;
+    height: 100vh;
+}

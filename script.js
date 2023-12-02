@@ -8,7 +8,9 @@ let Engine = Matter.Engine,
     log = console.log;
     container = document.getElementById("container"),
     width = container.clientWidth,
-    height = container.clientHeight
+    height = container.clientHeight,
+    gamer_over = false
+let debugging = false
 
 random = (min, max) => Math.random()*(max-min)+min
 
@@ -56,8 +58,9 @@ y0 = 15
 floor.lable = 'platform'
 floor.render.fillStyle = 'white'
 let player = Bodies.circle(500, height-60, 15, {restitution: 0.6, friction: 0, frictionAir: 0, mass:0.5})
-//Body.setPosition(player, {x:parseFloat(localStorage.getItem('player_x')) || 500, y:parseFloat(localStorage.getItem('player_y'))||height-60})
+if(debugging) Body.setPosition(player, {x:parseFloat(localStorage.getItem('player_x')) || 500, y:parseFloat(localStorage.getItem('player_y'))||height-60})
 player.render.fillStyle = 'white'
+player.render.strokeStyle = 'transparent'
 let sensor = Bodies.circle(0, 0, 10, {isSensor: true, render: {fillStyle: '#fff0'}})
 let key = Bodies.rectangle(10350, height-858, 25, 25, {isStatic:true, isSensor: true, lable: 'key'})
 let key_obtained = false
@@ -73,7 +76,7 @@ for(let i = 0; i < level.length; i++){
         y = height-level[i].y-level[i].h/2
     let block = Bodies.rectangle(x, y, level[i].w, level[i].h, {isStatic: true, friction: 0})
     block.render.fillStyle = 'white'
-    block.render.strokeStyle = 'white'
+    block.render.strokeStyle = 'transparent'
     block.lable = 'platform'
     Composite.add(engine.world, block)
 }
@@ -82,7 +85,7 @@ for(let i = 0; i < obsticles.length; i++){
         y = height-obsticles[i].y - obsticles[i].h/2
     let block = Bodies.rectangle(x, y, obsticles[i].w, obsticles[i].h, {isStatic: true, friction: 0})
     block.render.fillStyle = 'red'
-    block.render.strokeStyle = 'red'
+    block.render.strokeStyle = 'transparent'
     block.lable = 'obsticle'
     Composite.add(engine.world, block)
 }
@@ -132,7 +135,7 @@ Events.on(engine, 'beforeUpdate', () => {
     document.getElementById('in-game-text-container').style.top = `${-camera.y}px`
 })
 Events.on(engine, 'afterUpdate', () => {
-    Body.setPosition(sensor, {x:player.position.x, y:player.position.y+15})
+    Body.setPosition(sensor, {x:player.position.x, y:player.position.y+10})
     localStorage.setItem('player_x', player.position.x) // just to build the map
     localStorage.setItem('player_y', player.position.y)
     time += 1000/60
@@ -148,14 +151,27 @@ Events.on(engine, 'afterUpdate', () => {
 })
 
 function lose(){
+    if(debugging){
+        player.render.fillStyle = 'red'
+        setTimeout(() => {
+            player.render.fillStyle = 'white'
+        }, 1000)
+        return 0
+    }
+    if(gamer_over) return 0
+    gamer_over = true
+    player.render.fillStyle = 'red'
+    setTimeout(() => {
     alert(`
         You lost!
         you survived ${document.getElementById('time').innerHTML}
     `)
-    Runner.stop(runner)
-    location.reload()
+    location.reload()}, 300)
 }
 function win(){
+    if(gamer_over) return 0
+    gamer_over = true
+    setTimeout(() => {
     alert(`
         You won!
         you made it in ${document.getElementById('time').innerHTML}
@@ -164,9 +180,10 @@ function win(){
         localStorage.setItem('best_time', time)
         alert(`New best time! ${document.getElementById('time').innerHTML}`)
     }
-    Runner.stop(runner)
-    location.reload()
-
+    location.reload()}, 300)
+}
+function reset_pos(){
+    Body.setPosition(player, {x:500, y:height-60})
 }
 Events.on(engine, 'collisionStart', (e) => {
     for(let pair of e.pairs){

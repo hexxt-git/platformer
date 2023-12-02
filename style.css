@@ -21,29 +21,39 @@ body{
     animation: 2000ms fadeIn;
     -webkit-animation: 2000ms fadeIn;
 }
-#time{
-    position: absolute;
-    top: 35px;
-    left: 0px;
-    font-family: roboto;
-    padding: 0px 10px;
-    font-size: 30px;
-}
 #best{
     position: absolute;
     top: 5px;
-    left: 0px;
+    left: 5px;
+    width: 180px;
+    height: 25px;
     font-family: roboto;
     padding: 0px 10px;
-    font-size: 30px;
+    font-size: 20px;
+    border: solid #333 2px;
+    background-color: white;
+    color: #333;
+}
+#time{
+    position: absolute;
+    top: 35px;
+    left: 5px;
+    width: 180px;
+    height: 25px;
+    font-family: roboto;
+    padding: 0px 10px;
+    font-size: 20px;
+    border: solid #333 2px;
+    background-color: white;
+    color: #333;
 }
 #dash-meter{
     position: absolute;
-    top: 10px;
-    left: 205px;
+    top: 5px;
+    left: 210px;
     width: calc(100vw - 220px);
-    height: 20px;
-    border: solid white 2px;
+    height: 25px;
+    border: solid #333 2px;
     transform: scaleY(-1);
     -webkit-transform: scaleY(-1);
     -moz-transform: scaleY(-1);
@@ -111,7 +121,7 @@ body{
 #in-game-text-6{
     position: absolute;
     top: calc(50vh - 30px);
-    left: 3650px;
+    left: 3500px;
     width: 500px;
 }
 #in-game-text-7{

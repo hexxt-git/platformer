@@ -3,12 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
     <link rel="stylesheet" href="style.css">
     <script src="./matter-js-0.19.0/build/matter.js" defer></script>
+    <script src="level.js" defer></script>
     <script src="script.js" defer></script>
     <title>platformer</title>
 </head>
 <body>
     <div id="container"></div>
+    <div id="hud">
+        <div id="in-game-text-container">
+            <div class="in-game-text" id="in-game-text-0">← door "key is needed"</div>
+            <div class="in-game-text" id="in-game-text-1">use A and D or Left and Right keys to move</div>
+            <div class="in-game-text" id="in-game-text-2">use W or Up key to jump</div>
+            <div class="in-game-text" id="in-game-text-3">jump twice to perform a double-jump</div>
+            <div class="in-game-text" id="in-game-text-4">dash using S or Down key</div>
+            <div class="in-game-text" id="in-game-text-5">avoid red obsticles at all cost</div>
+            <div class="in-game-text" id="in-game-text-6">your goal is to find the key and come back in the shortest time possible 🔥<br>→</div>
+            <div class="in-game-text" id="in-game-text-7">you're close 🚀<br>→</div>
+        </div>
+        <div id="best">best: </div>
+        <div id="time">time: </div>
+        <div id="dash-meter">
+            <div id="dash-meter-fill"></div>
+        </div>
+    </div>
 </body>
 </html>

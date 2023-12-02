@@ -24,83 +24,188 @@ let engine = Engine.create(),
             background: 'transparent',
         }
     })
-engine.world.gravity.scale = 0.0015
+engine.world.gravity.scale = 0.0018
 let input_settings = {
-    moving_speed: 0.0009,
-    damping_speed: 0.05,
-    jump_force: 10,
-    dash_force: 0.01,
+    moving_speed: 0.001,
+    damping_speed: 0.07,
+    jump_speed: 11,
+    dash_vertical_speed: 3,
+    dash_force: 0.05,
     jumps_left: 2,
     max_jumps: 2,
-    dashes_left: 1,
     max_dashs: 1,
-    is_jumping: false,
-    is_sliding: false,
-    dash_duration: 1000,
-    dash_duration_timer: 0,
-    dash_cooldown: 1000,
-    jump_cooldown: 1000,
+    dash_cooldown: 2000,
     dash_cooldown_timer: 0,
-    jump_cooldown_timer: 0,
 }
+engine.timing.timeScale = 1.0;
+engine.constraintIterations = 10;
+
 let inputs = {x: 0, dash:false, jump: false}
+let time = 0
+best_m = Math.floor(localStorage.getItem('best_time')/60000)
+best_s = Math.floor(localStorage.getItem('best_time')/1000)%60
+best_ms = Math.floor(localStorage.getItem('best_time')/10)%100
+document.getElementById('best').innerHTML = `best: ${best_m}:${best_s<10?'0':''}${best_s}.${best_ms}${best_ms<10?'0':''}`
 
 Render.run(renderer)
 Runner.run(runner, engine)
+Render.startViewTransform(renderer)
 
-let floor = Bodies.rectangle(width/2, height, width*10, 30, {isStatic: true, friction: 0})
-floor.lable = 'floor'
-let ball = Bodies.circle(width/2, height/2, 10, {restitution: 0.6, friction: 0, frictionAir: 0})
-let sensor = Bodies.circle(width/2, height/2, 30, {isSensor: true, render: {fillStyle: 'transparent'}})
-Body.setVelocity(ball, {x: random(-10, 10), y: random(-10, 10)})
-Composite.add(engine.world, [floor, ball, sensor])
+let floor = Bodies.rectangle(inf/2, height, inf, 30, {isStatic: true, friction: 0})
+y0 = 15
+floor.lable = 'platform'
+floor.render.fillStyle = 'white'
+let player = Bodies.circle(500, height-60, 15, {restitution: 0.6, friction: 0, frictionAir: 0, mass:0.5})
+//Body.setPosition(player, {x:parseFloat(localStorage.getItem('player_x')) || 500, y:parseFloat(localStorage.getItem('player_y'))||height-60})
+player.render.fillStyle = 'white'
+let sensor = Bodies.circle(0, 0, 10, {isSensor: true, render: {fillStyle: '#fff0'}})
+let key = Bodies.rectangle(10350, height-858, 25, 25, {isStatic:true, isSensor: true, lable: 'key'})
+let key_obtained = false
+let door = Bodies.rectangle(50, height-100-y0, 10, 200, {isStatic:true, lable: 'door'})
+door.render.fillStyle = 'white'
+door.render.strokeStyle = 'white'
 
-function reset_controls(){
-    inputs.dash = false
-    inputs.jump = false
+key.render.fillStyle = 'yellow'
+Composite.add(engine.world, [floor, player, sensor, key, door])
+
+for(let i = 0; i < level.length; i++){
+    let x = level[i].x + level[i].w/2,
+        y = height-level[i].y-level[i].h/2
+    let block = Bodies.rectangle(x, y, level[i].w, level[i].h, {isStatic: true, friction: 0})
+    block.render.fillStyle = 'white'
+    block.render.strokeStyle = 'white'
+    block.lable = 'platform'
+    Composite.add(engine.world, block)
 }
+for(let i = 0; i < obsticles.length; i++){
+    let x = obsticles[i].x + obsticles[i].w/2,
+        y = height-obsticles[i].y - obsticles[i].h/2
+    let block = Bodies.rectangle(x, y, obsticles[i].w, obsticles[i].h, {isStatic: true, friction: 0})
+    block.render.fillStyle = 'red'
+    block.render.strokeStyle = 'red'
+    block.lable = 'obsticle'
+    Composite.add(engine.world, block)
+}
+
+let camera = {x:1, y: 1},
+    camera_min = {x:0,y:-1000},
+    camera_max = {x:1000000, y:y0}
+
 function jump(){
     if(input_settings.jumps_left <= 0) return 0
-    Body.setVelocity(ball, {x: ball.velocity.x, y: -input_settings.jump_force})
+    Body.setVelocity(player, {x: player.velocity.x, y: -input_settings.jump_speed})
     input_settings.jumps_left--
 }
 function dash(){
-    if(input_settings.dashes_left <= 0) return 0
-    if(ball.velocity.x > 0) Body.applyForce(ball, ball.position, {x: +input_settings.dash_force, y: 0})
-    if(ball.velocity.x < 0) Body.applyForce(ball, ball.position, {x: -input_settings.dash_force, y: 0})
-    //input_settings.dashes_left--
+    if(input_settings.dash_cooldown_timer > 0) return 0
+    if(Math.abs(player.velocity.x) < 0.1) return 0
+    Body.applyForce(player, player.position, {x: inputs.x*input_settings.dash_force, y: 0})
+    Body.setVelocity(player, {x: player.velocity.x, y: -input_settings.dash_vertical_speed})
+    if(inputs.x == 0) Body.applyForce(player, player.position, {x: input_settings.dash_force*Math.sign(player.velocity.x), y: 0})
+    input_settings.dash_cooldown_timer = input_settings.dash_cooldown
+}
+function lerp(a, b, k){
+    return a*(1-k)+b*k
 }
 
 Events.on(engine, 'beforeUpdate', () => {
-    Body.setVelocity(ball, {
-        x: ball.velocity.x*(1-input_settings.damping_speed),
-        y: ball.velocity.y
+    Body.setVelocity(player, {
+        x: player.velocity.x*(1-input_settings.damping_speed),
+        y: player.velocity.y
     })
-    Body.applyForce(ball, ball.position, {x: inputs.x*input_settings.moving_speed, y: 0})
-    
-    reset_controls()
+    Body.applyForce(player, player.position, {x: inputs.x*input_settings.moving_speed, y: 0})
+
+    if(input_settings.dash_cooldown_timer > 1000/60) input_settings.dash_cooldown_timer -= 1000/60
+    else{
+        input_settings.dash_cooldown_timer = 0
+    }
+    desired_camera = {
+        x: Math.max(Math.min(player.position.x-width/2, camera_max.x), camera_min.x),
+        y: Math.max(Math.min(player.position.y-height/2, camera_max.y), camera_min.y)
+    }
+    camera.x = lerp(camera.x, desired_camera.x, 0.2)
+    camera.y = lerp(camera.y, desired_camera.y, 0.2)
+    renderer.bounds = {min: {x: camera.x, y: camera.y}, max: {x: camera.x+width, y: camera.y+height}}
+    Render.startViewTransform(renderer)
+    document.getElementById('container').style.backgroundPosition = `${-camera.x}px ${900-camera.y}px`
+    document.getElementById('in-game-text-container').style.left = `${-camera.x}px`
+    document.getElementById('in-game-text-container').style.top = `${-camera.y}px`
 })
 Events.on(engine, 'afterUpdate', () => {
-    Body.setPosition(sensor, ball.position)
-
+    Body.setPosition(sensor, {x:player.position.x, y:player.position.y+15})
+    localStorage.setItem('player_x', player.position.x) // just to build the map
+    localStorage.setItem('player_y', player.position.y)
+    time += 1000/60
+    let m = Math.floor(time/60000),
+        s = Math.floor(time/1000)%60,
+        ms = Math.floor(time/10)%100
+    document.getElementById('time').innerHTML = `time: ${m}:${s<10?'0':''}${s}.${ms}${ms<10?'0':''}`
+    if(player.position.y > height+500){
+        Body.setPosition(player, {x:player.position.x, y:height-60})
+        lose()
+    }
+    document.getElementById('dash-meter-fill').style.width = `${100-100*input_settings.dash_cooldown_timer/input_settings.dash_cooldown}%`
 })
 
+function lose(){
+    alert(`
+        You lost!
+        you survived ${document.getElementById('time').innerHTML}
+    `)
+    Runner.stop(runner)
+    location.reload()
+}
+function win(){
+    alert(`
+        You won!
+        you made it in ${document.getElementById('time').innerHTML}
+    `)
+    if(localStorage.getItem('best_time') == null || localStorage.getItem('best_time') > time){
+        localStorage.setItem('best_time', time)
+        alert(`New best time! ${document.getElementById('time').innerHTML}`)
+    }
+    Runner.stop(runner)
+    location.reload()
+
+}
 Events.on(engine, 'collisionStart', (e) => {
     for(let pair of e.pairs){
-        if(pair.bodyA == sensor && pair.bodyB.lable == 'floor' || pair.bodyA.lable == 'floor' && pair.bodyB == sensor){
+        if(pair.bodyA == sensor && pair.bodyB.lable == 'platform' || pair.bodyA.lable == 'platform' && pair.bodyB == sensor){
             input_settings.jumps_left = input_settings.max_jumps
+        }
+        if(pair.bodyA == player && pair.bodyB.lable == 'obsticle' || pair.bodyA.lable == 'obsticle' && pair.bodyB == player){
+            lose()
+        }
+        if(pair.bodyA == player && pair.bodyB.lable == 'key' || pair.bodyA.lable == 'key' && pair.bodyB == player){
+            Composite.remove(engine.world, key)
+            key_obtained = true
+        }
+        if(pair.bodyA == player && pair.bodyB.lable == 'door' || pair.bodyA.lable == 'door' && pair.bodyB == player){
+            if(key_obtained){
+                win()
+            }
         }
     }
 })
+
+key_binds = {
+    jump_keys:  [' ', 'w', 'W', 'ArrowUp'],
+    dash_keys:  ['Shift', 's', 'S', 'ArrowDown'],
+    left_keys:  ['a', 'A', 'ArrowLeft'],
+    right_keys: ['d', 'D', 'ArrowRight']
+}
 document.addEventListener('keydown', (e) => {
-    if(e.key == "ArrowUp") jump()
-    if(e.key == " ") jump()
-    if(e.key == "ArrowDown") dash()
-    if(e.key == "Shift") dash()
-    if(e.key == "ArrowLeft") inputs.x = -1
-    if(e.key == "ArrowRight") inputs.x = 1
+    if(key_binds.jump_keys.includes(e.key)) jump()
+    if(key_binds.dash_keys.includes(e.key)) dash()
+    if(key_binds.left_keys.includes(e.key) ) inputs.x = -1
+    if(key_binds.right_keys.includes(e.key)) inputs.x = +1
 })
 document.addEventListener('keyup', (e) => {
-    if(e.key == "ArrowLeft") inputs.x = 0
-    if(e.key == "ArrowRight") inputs.x = 0
+    if(key_binds.left_keys.includes(e.key) ) inputs.x = 0
+    if(key_binds.right_keys.includes(e.key)) inputs.x = 0
 })
+document.addEventListener("DOMContentLoaded", () => {
+    window.addEventListener("resize", () => {
+        location.reload();
+    });
+});

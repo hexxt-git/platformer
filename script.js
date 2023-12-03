@@ -136,7 +136,7 @@ Events.on(engine, 'beforeUpdate', () => {
     camera.y = lerp(camera.y, desired_camera.y, 0.2)
     renderer.bounds = {min: {x: camera.x, y: camera.y}, max: {x: camera.x+width, y: camera.y+height}}
     Render.startViewTransform(renderer)
-    document.getElementById('container').style.backgroundPosition = `${-camera.x}px ${900-camera.y}px`
+    document.getElementById('container').style.backgroundPosition = `${-camera.x}px ${height+200-camera.y}px`
     document.getElementById('in-game-text-container').style.left = `${-camera.x}px`
     document.getElementById('in-game-text-container').style.top = `${-camera.y}px`
 })

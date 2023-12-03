@@ -9,8 +9,8 @@ body{
 #container{
     width: 100vw;
     height: 100vh;
-    background: url(imagef.jpg);
-    background-size: 120%;
+    background: url(Milky_Way.png);
+    background-size: 150%;
 }
 #hud{
     position: absolute;
@@ -101,15 +101,15 @@ body{
 }
 #in-game-text-3{
     position: absolute;
-    top: calc(50vh - 90px);
+    top: calc(50vh - 100px);
     left: 2100px;
     width: 400px;
 }
 #in-game-text-4{
     position: absolute;
-    top: calc(50vh - 120px);
-    left: 2650px;
-    width: 400px;
+    top: calc(50vh - 180px);
+    left: 2700px;
+    width: 300px;
 }
 #in-game-text-5{
     position: absolute;

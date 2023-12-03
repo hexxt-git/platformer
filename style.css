@@ -130,6 +130,12 @@ body{
     left: 8850px;
     width: 500px;
 }
+#in-game-text-8{
+    position: absolute;
+    top: -900px;
+    left: 11500px;
+    width: 500px;
+}
 @keyframes fadeIn {
     from {
         opacity: 0;

@@ -39,8 +39,10 @@ let input_settings = {
     dash_cooldown: 2000,
     dash_cooldown_timer: 0,
 }
-engine.timing.timeScale = 1.0;
-engine.constraintIterations = 10;
+engine.timing.timeScale = 1.0
+engine.constraintIterations = 10
+engine.positionIterations = 10
+
 
 let inputs = {x: 0, dash:false, jump: false}
 let time = 0
@@ -53,15 +55,17 @@ Render.run(renderer)
 Runner.run(runner, engine)
 Render.startViewTransform(renderer)
 
-let floor = Bodies.rectangle(inf/2, height, inf, 30, {isStatic: true, friction: 0})
+let floor = Bodies.rectangle(inf/2, height+15, inf, 60, {isStatic: true, friction: 0})
 y0 = 15
 floor.lable = 'platform'
 floor.render.fillStyle = 'white'
-let player = Bodies.circle(500, height-60, 15, {restitution: 0.6, friction: 0, frictionAir: 0, mass:0.5})
+let player = Bodies.circle(600, height-150, 15, {restitution: 0.6, friction: 0, frictionAir: 0, mass:0.5})
 if(debugging) Body.setPosition(player, {x:parseFloat(localStorage.getItem('player_x')) || 500, y:parseFloat(localStorage.getItem('player_y'))||height-60})
 player.render.fillStyle = 'white'
 player.render.strokeStyle = 'transparent'
+player.lable = 'player'
 let sensor = Bodies.circle(0, 0, 10, {isSensor: true, render: {fillStyle: '#fff0'}})
+sensor.lable = 'sensor'
 let key = Bodies.rectangle(10350, height-858, 25, 25, {isStatic:true, isSensor: true, lable: 'key'})
 let key_obtained = false
 let door = Bodies.rectangle(40, height-100-y0, 16, 300, {isStatic:true, lable: 'door'})
@@ -95,6 +99,8 @@ let camera = {x:1, y: 1},
     camera_max = {x:1000000, y:y0}
 
 function jump(){
+    if(inputs.y == -1) return 0
+    inputs.y = -1
     if(input_settings.jumps_left <= 0) return 0
     Body.setVelocity(player, {x: player.velocity.x, y: -input_settings.jump_speed})
     input_settings.jumps_left--
@@ -136,6 +142,7 @@ Events.on(engine, 'beforeUpdate', () => {
 })
 Events.on(engine, 'afterUpdate', () => {
     Body.setPosition(sensor, {x:player.position.x, y:player.position.y+15})
+    sensor.lable = 'sensor'
     localStorage.setItem('player_x', player.position.x) // just to build the map
     localStorage.setItem('player_y', player.position.y)
     time += 1000/60
@@ -187,12 +194,6 @@ function reset_pos(){
 }
 Events.on(engine, 'collisionStart', (e) => {
     for(let pair of e.pairs){
-        if(pair.bodyA == sensor && pair.bodyB.lable == 'platform' || pair.bodyA.lable == 'platform' && pair.bodyB == sensor){
-            input_settings.jumps_left = input_settings.max_jumps
-        }
-        if(pair.bodyA == sensor && pair.bodyB.lable == 'door' || pair.bodyA.lable == 'door' && pair.bodyB == sensor){
-            input_settings.jumps_left = input_settings.max_jumps
-        }
         if(pair.bodyA == player && pair.bodyB.lable == 'obsticle' || pair.bodyA.lable == 'obsticle' && pair.bodyB == player){
             lose()
         }
@@ -204,6 +205,16 @@ Events.on(engine, 'collisionStart', (e) => {
             if(key_obtained){
                 win()
             }
+        }
+    }
+})
+Events.on(engine, 'collisionActive', (e) => {
+    for(let pair of e.pairs){
+        if(pair.bodyA.lable == 'sensor' && pair.bodyB.lable == 'platform' || pair.bodyA.lable == 'platform' && pair.bodyB.lable == 'sensor'){
+            input_settings.jumps_left = input_settings.max_jumps
+        }
+        if(pair.bodyA.lable == 'sensor' && pair.bodyB.lable == 'door' || pair.bodyA.lable == 'door' && pair.bodyB.lable == 'sensor'){
+            input_settings.jumps_left = input_settings.max_jumps
         }
     }
 })
@@ -223,6 +234,7 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('keyup', (e) => {
     if(key_binds.left_keys.includes(e.key) ) inputs.x = 0
     if(key_binds.right_keys.includes(e.key)) inputs.x = 0
+    if(key_binds.jump_keys.includes(e.key)) inputs.y = 0
 })
 document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("resize", () => {

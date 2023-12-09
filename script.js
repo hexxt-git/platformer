@@ -64,8 +64,10 @@ if(debugging) Body.setPosition(player, {x:parseFloat(localStorage.getItem('playe
 player.render.fillStyle = 'white'
 player.render.strokeStyle = 'transparent'
 player.lable = 'player'
-let sensor = Bodies.circle(0, 0, 10, {isSensor: true, render: {fillStyle: '#fff0'}})
-sensor.lable = 'sensor'
+let sensor1 = Bodies.circle(0, 0, 10, {isSensor: true, render: {fillStyle: '#fff0'}})
+let sensor2 = Bodies.circle(0, 0, 10, {isSensor: true, render: {fillStyle: '#fff0'}})
+sensor1.lable = 'sensor'
+sensor2.lable = 'sensor'
 let key = Bodies.rectangle(10350, height-858, 25, 25, {isStatic:true, isSensor: true, lable: 'key'})
 let key_obtained = false
 let door = Bodies.rectangle(40, height-100-y0, 16, 300, {isStatic:true, lable: 'door'})
@@ -73,7 +75,7 @@ door.render.fillStyle = 'white'
 door.render.strokeStyle = 'white'
 
 key.render.fillStyle = 'yellow'
-Composite.add(engine.world, [floor, player, sensor, key, door])
+Composite.add(engine.world, [floor, player, sensor1, sensor2, key, door])
 
 for(let i = 0; i < level.length; i++){
     let x = level[i].x + level[i].w/2,
@@ -141,8 +143,10 @@ Events.on(engine, 'beforeUpdate', () => {
     document.getElementById('in-game-text-container').style.top = `${-camera.y}px`
 })
 Events.on(engine, 'afterUpdate', () => {
-    Body.setPosition(sensor, {x:player.position.x, y:player.position.y+15})
-    sensor.lable = 'sensor'
+    Body.setPosition(sensor1, {x:player.position.x+3, y:player.position.y+10})
+    Body.setPosition(sensor2, {x:player.position.x-3, y:player.position.y+10})
+    sensor1.lable = 'sensor'
+    sensor2.lable = 'sensor'
     localStorage.setItem('player_x', player.position.x) // just to build the map
     localStorage.setItem('player_y', player.position.y)
     time += 1000/60

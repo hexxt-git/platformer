@@ -99,13 +99,27 @@ for(let i = 0; i < obsticles.length; i++){
 let camera = {x:1, y: 1},
     camera_min = {x:0,y:-1000},
     camera_max = {x:1000000, y:y0}
-
+function shoot_jump_particles(){
+    let particles = new particle_sys({x:player.position.x, y:player.position.y+20}, {x:-player.velocity.x, y:2}, 10, size=5, mass=0.1, bounce=0.8, variation=5, '#fff6', 'circle')
+    particles.insert_to_world(engine.world)
+    setTimeout(() => {
+        particles.delete_from_world(engine.world)
+    }, 600)
+}
 function jump(){
     if(inputs.y == -1) return 0
     inputs.y = -1
     if(input_settings.jumps_left <= 0) return 0
     Body.setVelocity(player, {x: player.velocity.x, y: -input_settings.jump_speed})
+    shoot_jump_particles()
     input_settings.jumps_left--
+}
+function shoot_dash_particles(){
+    let particles = new particle_sys(player.position, {x:-player.velocity.x*2, y:2}, 10, size=5, mass=0.1, bounce=0.8, variation=5, '#fff6', 'circle')
+    particles.insert_to_world(engine.world)
+    setTimeout(() => {
+        particles.delete_from_world(engine.world)
+    }, 600)
 }
 function dash(){
     if(input_settings.dash_cooldown_timer > 0) return 0
@@ -113,6 +127,7 @@ function dash(){
     Body.applyForce(player, player.position, {x: inputs.x*input_settings.dash_force, y: 0})
     Body.setVelocity(player, {x: player.velocity.x, y: -input_settings.dash_vertical_speed})
     if(inputs.x == 0) Body.applyForce(player, player.position, {x: input_settings.dash_force*Math.sign(player.velocity.x), y: 0})
+    shoot_dash_particles()
     input_settings.dash_cooldown_timer = input_settings.dash_cooldown
 }
 function lerp(a, b, k){

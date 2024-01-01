@@ -62,20 +62,22 @@ floor.render.fillStyle = 'white'
 let player = Bodies.circle(600, height-150, 15, {restitution: 0.6, friction: 0, frictionAir: 0, mass:0.5})
 if(debugging) Body.setPosition(player, {x:parseFloat(localStorage.getItem('player_x')) || 500, y:parseFloat(localStorage.getItem('player_y'))||height-60})
 player.render.fillStyle = 'white'
-player.render.strokeStyle = 'transparent'
 player.lable = 'player'
+player.render.visible = false
+let display_player = Bodies.circle(600, height-150, 15, {isStatic: true, isSensor: true, render: {fillStyle: 'white'}})
+display_player.scale = {x: 1, y: 1}
 let sensor1 = Bodies.circle(0, 0, 10, {isSensor: true, render: {fillStyle: '#fff0'}})
 let sensor2 = Bodies.circle(0, 0, 10, {isSensor: true, render: {fillStyle: '#fff0'}})
 sensor1.lable = 'sensor'
 sensor2.lable = 'sensor'
 let key = Bodies.rectangle(10350, height-858, 25, 25, {isStatic:true, isSensor: true, lable: 'key'})
 let key_obtained = false
+key.render.fillStyle = 'yellow'
 let door = Bodies.rectangle(40, height-100-y0, 16, 300, {isStatic:true, lable: 'door'})
 door.render.fillStyle = 'white'
 door.render.strokeStyle = 'white'
 
-key.render.fillStyle = 'yellow'
-Composite.add(engine.world, [floor, player, sensor1, sensor2, key, door])
+Composite.add(engine.world, [floor, player, display_player, sensor1, sensor2, key, door])
 
 for(let i = 0; i < level.length; i++){
     let x = level[i].x + level[i].w/2,
@@ -140,7 +142,6 @@ Events.on(engine, 'beforeUpdate', () => {
         y: player.velocity.y
     })
     Body.applyForce(player, player.position, {x: inputs.x*input_settings.moving_speed, y: 0})
-
     if(input_settings.dash_cooldown_timer > 1000/60) input_settings.dash_cooldown_timer -= 1000/60
     else{
         input_settings.dash_cooldown_timer = 0
@@ -162,7 +163,7 @@ Events.on(engine, 'afterUpdate', () => {
     Body.setPosition(sensor2, {x:player.position.x-3, y:player.position.y+10})
     sensor1.lable = 'sensor'
     sensor2.lable = 'sensor'
-    localStorage.setItem('player_x', player.position.x) // just to build the map
+    localStorage.setItem('player_x', player.position.x) // debugging
     localStorage.setItem('player_y', player.position.y)
     time += 1000/60
     let m = Math.floor(time/60000),
@@ -174,19 +175,28 @@ Events.on(engine, 'afterUpdate', () => {
         lose()
     }
     document.getElementById('dash-meter-fill').style.width = `${100-100*input_settings.dash_cooldown_timer/input_settings.dash_cooldown}%`
+    Body.setPosition(display_player, player.position)
+    Body.setVelocity(display_player, player.velocity)
+    Body.scale(display_player, 1/display_player.scale.x, 1/display_player.scale.y)
+    let magnitude = Math.sqrt(player.velocity.x**2+player.velocity.y**2) * 0.02
+    let angle = Math.atan2(player.velocity.y, player.velocity.x)
+    display_player.scale.x = 1+magnitude*Math.abs(Math.cos(angle))
+    display_player.scale.y = 1+magnitude*Math.abs(Math.sin(angle))
+
+    Body.scale(display_player, display_player.scale.x, display_player.scale.y)
 })
 
 function lose(){
     if(debugging){
-        player.render.fillStyle = 'red'
+        display_player.render.fillStyle = 'red'
         setTimeout(() => {
-            player.render.fillStyle = 'white'
+            display_player.render.fillStyle = 'white'
         }, 1000)
         return 0
     }
     if(gamer_over) return 0
     gamer_over = true
-    player.render.fillStyle = 'red'
+    display_player.render.fillStyle = 'red'
     setTimeout(() => {
     alert(`
         You lost!

@@ -252,13 +252,15 @@ key_binds = {
     jump_keys:  [' ', 'w', 'W', 'ArrowUp'],
     dash_keys:  ['Shift', 's', 'S', 'ArrowDown'],
     left_keys:  ['a', 'A', 'ArrowLeft'],
-    right_keys: ['d', 'D', 'ArrowRight']
+    right_keys: ['d', 'D', 'ArrowRight'],
+    restart:    ['r', 'R', 'Escape', 'Delete'],
 }
 document.addEventListener('keydown', (e) => {
     if(key_binds.jump_keys.includes(e.key)) jump()
     if(key_binds.dash_keys.includes(e.key)) dash()
     if(key_binds.left_keys.includes(e.key) ) inputs.x = -1
     if(key_binds.right_keys.includes(e.key)) inputs.x = +1
+    if(key_binds.restart.includes(e.key)) location.reload()
 })
 document.addEventListener('keyup', (e) => {
     if(key_binds.left_keys.includes(e.key) ) inputs.x = 0

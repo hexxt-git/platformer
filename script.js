@@ -10,7 +10,7 @@ let Engine = Matter.Engine,
     width = container.clientWidth,
     height = container.clientHeight,
     gamer_over = false
-let debugging = true
+let debugging = false
 
 random = (min, max) => Math.random()*(max-min)+min
 

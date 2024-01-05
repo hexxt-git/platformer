@@ -10,7 +10,7 @@ let Engine = Matter.Engine,
     width = container.clientWidth,
     height = container.clientHeight,
     gamer_over = false
-let debugging = false
+let debugging = true
 
 random = (min, max) => Math.random()*(max-min)+min
 
@@ -55,25 +55,25 @@ Render.run(renderer)
 Runner.run(runner, engine)
 Render.startViewTransform(renderer)
 
-let floor = Bodies.rectangle(inf/2, height+15, inf, 60, {isStatic: true, friction: 0})
+let floor = Bodies.rectangle(inf/2, height+35, inf, 100, {isStatic: true, friction: 0})
 y0 = 15
-floor.lable = 'platform'
+floor.label = 'platform'
 floor.render.fillStyle = 'white'
 let player = Bodies.circle(600, height-150, 15, {restitution: 0.6, friction: 0, frictionAir: 0, mass:0.5})
 if(debugging) Body.setPosition(player, {x:parseFloat(localStorage.getItem('player_x')) || 500, y:parseFloat(localStorage.getItem('player_y'))||height-60})
 player.render.fillStyle = 'white'
-player.lable = 'player'
+player.label = 'player'
 player.render.visible = false
 let display_player = Bodies.circle(600, height-150, 15, {isStatic: true, isSensor: true, render: {fillStyle: 'white'}})
 display_player.scale = {x: 1, y: 1}
 let sensor1 = Bodies.circle(0, 0, 10, {isSensor: true, render: {fillStyle: '#fff0'}})
 let sensor2 = Bodies.circle(0, 0, 10, {isSensor: true, render: {fillStyle: '#fff0'}})
-sensor1.lable = 'sensor'
-sensor2.lable = 'sensor'
-let key = Bodies.rectangle(10350, height-858, 25, 25, {isStatic:true, isSensor: true, lable: 'key'})
+sensor1.label = 'sensor'
+sensor2.label = 'sensor'
+let key = Bodies.rectangle(10350, height-858, 25, 25, {isStatic:true, isSensor: true, label: 'key'})
 let key_obtained = false
 key.render.fillStyle = 'yellow'
-let door = Bodies.rectangle(40, height-100-y0, 16, 300, {isStatic:true, lable: 'door'})
+let door = Bodies.rectangle(40, height-100-y0, 16, 300, {isStatic:true, label: 'door'})
 door.render.fillStyle = 'white'
 door.render.strokeStyle = 'white'
 
@@ -85,7 +85,7 @@ for(let i = 0; i < level.length; i++){
     let block = Bodies.rectangle(x, y, level[i].w, level[i].h, {isStatic: true, friction: 0})
     block.render.fillStyle = 'white'
     block.render.strokeStyle = 'transparent'
-    block.lable = 'platform'
+    block.label = 'platform'
     Composite.add(engine.world, block)
 }
 for(let i = 0; i < obsticles.length; i++){
@@ -94,7 +94,7 @@ for(let i = 0; i < obsticles.length; i++){
     let block = Bodies.rectangle(x, y, obsticles[i].w, obsticles[i].h, {isStatic: true, friction: 0})
     block.render.fillStyle = 'red'
     block.render.strokeStyle = 'transparent'
-    block.lable = 'obsticle'
+    block.label = 'obsticle'
     Composite.add(engine.world, block)
 }
 
@@ -161,8 +161,8 @@ Events.on(engine, 'beforeUpdate', () => {
 Events.on(engine, 'afterUpdate', () => {
     Body.setPosition(sensor1, {x:player.position.x+3, y:player.position.y+10})
     Body.setPosition(sensor2, {x:player.position.x-3, y:player.position.y+10})
-    sensor1.lable = 'sensor'
-    sensor2.lable = 'sensor'
+    sensor1.label = 'sensor'
+    sensor2.label = 'sensor'
     localStorage.setItem('player_x', player.position.x) // debugging
     localStorage.setItem('player_y', player.position.y)
     time += 1000/60
@@ -182,8 +182,9 @@ Events.on(engine, 'afterUpdate', () => {
     let angle = Math.atan2(player.velocity.y, player.velocity.x)
     display_player.scale.x = 1+magnitude*Math.abs(Math.cos(angle))
     display_player.scale.y = 1+magnitude*Math.abs(Math.sin(angle))
-
     Body.scale(display_player, display_player.scale.x, display_player.scale.y)
+    
+    if(Composite.allBodies(engine.world).filter(b => ['platform', 'door'].includes(b.label)).some(b => Matter.Bounds.contains(b.bounds, Matter.Vector.create(player.position.x, player.position.y+player.circleRadius+1)))) player.jumps_left = input_settings.max_jumps // epic one liner ngl
 })
 
 function lose(){
@@ -223,14 +224,14 @@ function reset_pos(){
 }
 Events.on(engine, 'collisionStart', (e) => {
     for(let pair of e.pairs){
-        if(pair.bodyA == player && pair.bodyB.lable == 'obsticle' || pair.bodyA.lable == 'obsticle' && pair.bodyB == player){
+        if(pair.bodyA == player && pair.bodyB.label == 'obsticle' || pair.bodyA.label == 'obsticle' && pair.bodyB == player){
             lose()
         }
-        if(pair.bodyA == player && pair.bodyB.lable == 'key' || pair.bodyA.lable == 'key' && pair.bodyB == player){
+        if(pair.bodyA == player && pair.bodyB.label == 'key' || pair.bodyA.label == 'key' && pair.bodyB == player){
             Composite.remove(engine.world, key)
             key_obtained = true
         }
-        if(pair.bodyA == player && pair.bodyB.lable == 'door' || pair.bodyA.lable == 'door' && pair.bodyB == player){
+        if(pair.bodyA == player && pair.bodyB.label == 'door' || pair.bodyA.label == 'door' && pair.bodyB == player){
             if(key_obtained){
                 win()
             }
@@ -239,10 +240,10 @@ Events.on(engine, 'collisionStart', (e) => {
 })
 Events.on(engine, 'collisionActive', (e) => {
     for(let pair of e.pairs){
-        if(pair.bodyA.lable == 'sensor' && pair.bodyB.lable == 'platform' || pair.bodyA.lable == 'platform' && pair.bodyB.lable == 'sensor'){
+        if(pair.bodyA.label == 'sensor' && pair.bodyB.label == 'platform' || pair.bodyA.label == 'platform' && pair.bodyB.label == 'sensor'){
             input_settings.jumps_left = input_settings.max_jumps
         }
-        if(pair.bodyA.lable == 'sensor' && pair.bodyB.lable == 'door' || pair.bodyA.lable == 'door' && pair.bodyB.lable == 'sensor'){
+        if(pair.bodyA.label == 'sensor' && pair.bodyB.label == 'door' || pair.bodyA.label == 'door' && pair.bodyB.label == 'sensor'){
             input_settings.jumps_left = input_settings.max_jumps
         }
     }
